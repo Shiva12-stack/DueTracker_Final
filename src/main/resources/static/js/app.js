@@ -115,28 +115,27 @@ window.DueTrackerApp = {
 
   showView(viewId) {
 
+    // Remove active class from ALL views
     document
-        .querySelectorAll('.view-portal')
-        .forEach(el =>
-            el.classList.remove('active')
-        );
+        .querySelectorAll('.view')
+        .forEach(el => {
+          el.classList.remove('active');
+        });
 
-    const target =
-        document.getElementById(viewId);
+    // Show only the selected view
+    const target = document.getElementById(viewId);
 
     if (target) {
       target.classList.add('active');
     }
 
-    const sidebar =
-        document.getElementById('app-sidebar');
+    // Sidebar
+    const sidebar = document.getElementById('sidebar');
 
-    const layout =
-        document.getElementById('app-layout');
+    // Main container
+    const main = document.getElementById('main');
 
-    const topHeader =
-        document.getElementById('top-header');
-
+    // Check whether this is an authentication/main-menu page
     const isAuthPage =
         viewId === 'view-landing' ||
         viewId === 'view-seller-auth' ||
@@ -148,12 +147,8 @@ window.DueTrackerApp = {
         sidebar.classList.add('hidden');
       }
 
-      if (layout) {
-        layout.classList.add('no-sidebar');
-      }
-
-      if (topHeader) {
-        topHeader.style.display = 'none';
+      if (main) {
+        main.classList.add('no-sidebar');
       }
 
     } else {
@@ -162,12 +157,8 @@ window.DueTrackerApp = {
         sidebar.classList.remove('hidden');
       }
 
-      if (layout) {
-        layout.classList.remove('no-sidebar');
-      }
-
-      if (topHeader) {
-        topHeader.style.display = 'flex';
+      if (main) {
+        main.classList.remove('no-sidebar');
       }
     }
 
