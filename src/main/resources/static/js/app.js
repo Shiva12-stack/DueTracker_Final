@@ -135,7 +135,6 @@ window.DueTrackerApp = {
     // Main container
     const main = document.getElementById('main');
 
-    // Check whether this is an authentication/main-menu page
     const isAuthPage =
         viewId === 'view-landing' ||
         viewId === 'view-seller-auth' ||
@@ -164,7 +163,6 @@ window.DueTrackerApp = {
 
     this.updateTopHeader();
   },
-
   navigateLanding() {
 
     this.currentUser = null;
