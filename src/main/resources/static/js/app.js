@@ -2125,9 +2125,6 @@ window.DueTrackerApp = {
 window.App = window.DueTrackerApp;
 
 
-// =============================================================
-// START APPLICATION
-// =============================================================
 
 document.addEventListener(
     'DOMContentLoaded',
