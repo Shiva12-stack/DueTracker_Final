@@ -2122,6 +2122,7 @@ window.DueTrackerApp = {
     return this.escapeHtml(str);
   }
 };
+window.App = window.DueTrackerApp;
 
 
 // =============================================================
