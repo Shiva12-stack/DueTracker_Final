@@ -44,14 +44,13 @@ window.DueTrackerApp = {
       input.type = 'text';
 
       if (btnEl) {
-        btnEl.innerText = 'Hide';
+        btnEl.textContent = '🙈';
       }
-
     } else {
       input.type = 'password';
 
       if (btnEl) {
-        btnEl.innerText = 'Show';
+        btnEl.textContent = '👁';
       }
     }
   },
@@ -61,442 +60,282 @@ window.DueTrackerApp = {
         this.currentTheme === 'dark' ? 'light' : 'dark';
 
     localStorage.setItem('dt_theme', this.currentTheme);
-
     this.applyTheme(this.currentTheme);
   },
 
   applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
 
-    document.documentElement.setAttribute(
-        'data-theme',
-        theme
-    );
+    const label = document.getElementById('s-theme-label');
 
-    const textEl =
-        document.getElementById('theme-toggle-text');
-
-    const badgeEl =
-        document.getElementById('theme-badge');
-
-    const settingsLabel =
-        document.getElementById('settings-theme-label');
-
-    if (theme === 'light') {
-
-      if (textEl) {
-        textEl.innerText = '☀️ Light Mode';
-      }
-
-      if (badgeEl) {
-        badgeEl.innerText = 'Light';
-      }
-
-      if (settingsLabel) {
-        settingsLabel.innerText =
-            'Switch to Dark Mode 🌙';
-      }
-
-    } else {
-
-      if (textEl) {
-        textEl.innerText = '🌙 Dark Mode';
-      }
-
-      if (badgeEl) {
-        badgeEl.innerText = 'Dark';
-      }
-
-      if (settingsLabel) {
-        settingsLabel.innerText =
-            'Switch to Light Mode ☀️';
-      }
+    if (label) {
+      label.textContent =
+          theme === 'dark' ? 'Dark Mode' : 'Light Mode';
     }
   },
 
   showView(viewId) {
+    document.querySelectorAll('.view').forEach(view => {
+      view.classList.remove('active');
+    });
 
-    // Remove active class from ALL views
-    document
-        .querySelectorAll('.view')
-        .forEach(el => {
-          el.classList.remove('active');
-        });
+    const view = document.getElementById(viewId);
 
-    // Show only the selected view
-    const target = document.getElementById(viewId);
-
-    if (target) {
-      target.classList.add('active');
+    if (view) {
+      view.classList.add('active');
     }
 
-    // Sidebar
     const sidebar = document.getElementById('sidebar');
-
-    // Main container
     const main = document.getElementById('main');
 
-    const isAuthPage =
-        viewId === 'view-landing' ||
-        viewId === 'view-seller-auth' ||
-        viewId === 'view-customer-auth';
-
-    if (isAuthPage || !this.currentUser) {
-
-      if (sidebar) {
-        sidebar.classList.add('hidden');
-      }
-
-      if (main) {
-        main.classList.add('no-sidebar');
-      }
-
+    if (
+        viewId === 'view-seller-portal' ||
+        viewId === 'view-customer-dashboard'
+    ) {
+      if (sidebar) sidebar.classList.add('visible');
+      if (main) main.classList.add('with-sidebar');
     } else {
-
-      if (sidebar) {
-        sidebar.classList.remove('hidden');
-      }
-
-      if (main) {
-        main.classList.remove('no-sidebar');
-      }
+      if (sidebar) sidebar.classList.remove('visible');
+      if (main) main.classList.remove('with-sidebar');
     }
-
-    this.updateTopHeader();
   },
+
   navigateLanding() {
-
     this.currentUser = null;
-
-    sessionStorage.removeItem(
-        'dt_active_session'
-    );
-
     this.showView('view-landing');
+
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('main');
+
+    if (sidebar) sidebar.classList.remove('visible');
+    if (main) main.classList.remove('with-sidebar');
+  },
+
+  goHome() {
+    this.navigateLanding();
   },
 
   showSellerAuth(mode = 'login') {
-
     this.showView('view-seller-auth');
-
     this.toggleSellerAuthMode(mode);
   },
 
-  toggleSellerAuthMode(mode) {
+  toggleSellerAuthMode(mode = 'login') {
+    const loginBox = document.getElementById('seller-login-card');
+    const registerBox = document.getElementById('seller-register-card');
 
-    const loginBox =
-        document.getElementById('seller-login-box');
-
-    const regBox =
-        document.getElementById('seller-register-box');
+    if (!loginBox || !registerBox) return;
 
     if (mode === 'register') {
-
-      if (loginBox) {
-        loginBox.style.display = 'none';
-      }
-
-      if (regBox) {
-        regBox.style.display = 'block';
-      }
-
+      loginBox.style.display = 'none';
+      registerBox.style.display = 'block';
     } else {
-
-      if (loginBox) {
-        loginBox.style.display = 'block';
-      }
-
-      if (regBox) {
-        regBox.style.display = 'none';
-      }
+      loginBox.style.display = 'block';
+      registerBox.style.display = 'none';
     }
   },
 
   showCustomerAuth() {
-
     this.showView('view-customer-auth');
   },
 
-  updateTopHeader() {
+  updateTopHeader(title = '') {
+    const pageTitle = document.getElementById('page-title');
+    const storeChip = document.getElementById('store-chip');
 
-    const headerBadges =
-        document.getElementById(
-            'top-header-badges'
-        );
-
-    const titleEl =
-        document.getElementById(
-            'page-title-text'
-        );
-
-    if (!this.currentUser) {
-
-      if (titleEl) {
-        titleEl.innerText =
-            'DueTracker Portal';
-      }
-
-      if (headerBadges) {
-        headerBadges.innerHTML = '';
-      }
-
-      return;
+    if (pageTitle && title) {
+      pageTitle.textContent = title;
     }
-
-    if (this.currentUser.role === 'SELLER') {
-
-      const storeName =
-          this.currentUser.data.storeName ||
-          'My Store';
-
-      if (titleEl) {
-        titleEl.innerText =
-            this.getTabTitle(this.activeTab);
-      }
-
-      if (headerBadges) {
-
-        headerBadges.innerHTML = `
-          <div class="store-badge">
-            🏪 ${this.escapeHtml(storeName)}
-          </div>
-
-          <span class="role-badge">
-            Shop Owner
-          </span>
-        `;
-      }
-
-    } else if (
-        this.currentUser.role === 'CUSTOMER'
-    ) {
-
-      if (titleEl) {
-        titleEl.innerText =
-            'Customer Portal Dashboard';
-      }
-
-      if (headerBadges) {
-
-        headerBadges.innerHTML = `
-          <span
-            class="role-badge"
-            style="
-              background: rgba(0, 180, 216, 0.15);
-              color: #00b4d8;
-            "
-          >
-            Customer
-          </span>
-        `;
-      }
-    }
-  },
-
-  getTabTitle(tab) {
-
-    switch (tab) {
-
-      case 'dashboard':
-        return 'Dashboard Overview';
-
-      case 'customers':
-        return 'Customer Directory';
-
-      case 'transactions':
-        return 'Transaction Logs';
-
-      case 'settings':
-        return 'Store Settings';
-
-      default:
-        return 'Dashboard';
-    }
-  },
-
-  logout() {
-
-    this.currentUser = null;
-
-    sessionStorage.removeItem(
-        'dt_active_session'
-    );
-
-    this.navigateLanding();
-  },
-
-  switchTab(tabId) {
-
-    this.activeTab = tabId;
-
-    document
-        .querySelectorAll('.menu-link')
-        .forEach(btn =>
-            btn.classList.remove('active')
-        );
-
-    const activeBtn =
-        document.getElementById(
-            `nav-item-${tabId}`
-        );
-
-    if (activeBtn) {
-      activeBtn.classList.add('active');
-    }
-
-    document
-        .querySelectorAll('.tab-content')
-        .forEach(content =>
-            content.classList.remove('active')
-        );
-
-    const activeContent =
-        document.getElementById(
-            `tab-${tabId}`
-        );
-
-    if (activeContent) {
-      activeContent.classList.add('active');
-    }
-
-    this.updateTopHeader();
 
     if (
+        storeChip &&
         this.currentUser &&
         this.currentUser.role === 'SELLER'
     ) {
+      const seller = this.currentUser.data || {};
 
-      if (tabId === 'dashboard') {
-        this.refreshSellerDashboard();
-      }
-
-      if (tabId === 'customers') {
-        this.loadCustomersTab();
-      }
-
-      if (tabId === 'transactions') {
-        this.loadTransactionsTab();
-      }
-
-      if (tabId === 'settings') {
-        this.loadSettingsTab();
-      }
+      storeChip.textContent =
+          seller.storeName ||
+          seller.store ||
+          'DueTracker';
     }
   },
 
-  // -------------------------------------------------------------
-  // AUTH HANDLERS
-  // -------------------------------------------------------------
-
-  async handleSellerRegister(e) {
-
-    e.preventDefault();
-
-    const alertEl =
-        document.getElementById(
-            'seller-register-alert'
-        );
-
-    alertEl.innerHTML = '';
-
-    const data = {
-
-      name:
-          document
-              .getElementById('reg-name')
-              .value
-              .trim(),
-
-      storeName:
-          document
-              .getElementById('reg-store')
-              .value
-              .trim(),
-
-      email:
-          document
-              .getElementById('reg-email')
-              .value
-              .trim(),
-
-      phone:
-          document
-              .getElementById('reg-phone')
-              .value
-              .trim(),
-
-      password:
-          document
-              .getElementById('reg-pass')
-              .value
-              .trim()
+  getTabTitle(tabId) {
+    const titles = {
+      dashboard: 'Dashboard',
+      customers: 'Customers',
+      transactions: 'Transactions',
+      settings: 'Settings'
     };
 
-    try {
+    return titles[tabId] || 'DueTracker';
+  },
 
-      await DueTrackerAPI.registerSeller(data);
+  logout() {
+    sessionStorage.removeItem('dt_active_session');
 
-      alertEl.innerHTML = `
-        <div class="alert alert-success">
-          Shop registered! Redirecting to sign in...
-        </div>
-      `;
+    this.currentUser = null;
+    this.activeTab = 'dashboard';
 
-      setTimeout(() => {
+    this.showView('view-landing');
+  },
 
-        document
-            .getElementById(
-                'seller-login-email'
-            )
-            .value = data.email;
+  switchTab(tabId) {
+    this.activeTab = tabId;
 
-        this.toggleSellerAuthMode('login');
+    document.querySelectorAll('.sb-link').forEach(link => {
+      link.classList.remove('active');
+    });
 
-      }, 1000);
+    const activeLink =
+        document.querySelector(`.sb-link[data-tab="${tabId}"]`);
 
-    } catch (err) {
+    if (activeLink) {
+      activeLink.classList.add('active');
+    }
 
-      alertEl.innerHTML = `
-        <div class="alert alert-error">
-          ${this.escapeHtml(err.message)}
-        </div>
-      `;
+    this.updateTopHeader(this.getTabTitle(tabId));
+
+    if (tabId === 'dashboard') {
+      this.refreshSellerDashboard();
+    }
+
+    if (tabId === 'customers') {
+      this.loadCustomersTab();
+    }
+
+    if (tabId === 'transactions') {
+      this.loadTransactionsTab();
+    }
+
+    if (tabId === 'settings') {
+      this.loadSettingsTab();
     }
   },
 
-  async handleSellerLogin(e) {
+  tab(tabId) {
+    this.switchTab(tabId);
+  },
 
-    e.preventDefault();
+  async handleSellerRegister(event) {
+    if (event) {
+      event.preventDefault();
+    }
 
-    const alertEl =
-        document.getElementById(
-            'seller-login-alert'
-        );
+    const alertBox = document.getElementById('sr-alert');
 
-    alertEl.innerHTML = '';
+    const name =
+        document.getElementById('sr-name')?.value.trim();
 
-    const identifier =
-        document
-            .getElementById('seller-login-email')
-            .value
-            .trim();
+    const store =
+        document.getElementById('sr-store')?.value.trim();
+
+    const email =
+        document.getElementById('sr-email')?.value.trim();
+
+    const phone =
+        document.getElementById('sr-phone')?.value.trim();
 
     const password =
-        document
-            .getElementById('seller-login-pass')
-            .value
-            .trim();
+        document.getElementById('sr-pass')?.value;
+
+    if (!name || !store || !email || !phone || !password) {
+      this.showAlert(
+          alertBox,
+          'Please fill all required fields.',
+          'error'
+      );
+      return;
+    }
 
     try {
+      const result =
+          await DueTrackerAPI.registerSeller({
+            name,
+            storeName: store,
+            email,
+            phone,
+            password
+          });
 
-      const res =
+      if (result.success === false) {
+        throw new Error(
+            result.message || 'Registration failed.'
+        );
+      }
+
+      this.showAlert(
+          alertBox,
+          'Registration successful. Please login.',
+          'success'
+      );
+
+      setTimeout(() => {
+        this.toggleSellerAuthMode('login');
+
+        const loginEmail =
+            document.getElementById('sl-email');
+
+        if (loginEmail) {
+          loginEmail.value = email;
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error('Seller registration error:', error);
+
+      this.showAlert(
+          alertBox,
+          error.message || 'Registration failed.',
+          'error'
+      );
+    }
+  },
+
+  sellerRegister(event) {
+    return this.handleSellerRegister(event);
+  },
+
+  async handleSellerLogin(event) {
+    if (event) {
+      event.preventDefault();
+    }
+
+    const alertBox =
+        document.getElementById('sl-alert');
+
+    const email =
+        document.getElementById('sl-email')?.value.trim();
+
+    const password =
+        document.getElementById('sl-pass')?.value;
+
+    if (!email || !password) {
+      this.showAlert(
+          alertBox,
+          'Please enter email and password.',
+          'error'
+      );
+      return;
+    }
+
+    try {
+      const result =
           await DueTrackerAPI.loginSeller(
-              identifier,
+              email,
               password
           );
 
+      if (!result || result.success === false) {
+        throw new Error(
+            result?.message || 'Invalid login credentials.'
+        );
+      }
+
       this.currentUser = {
         role: 'SELLER',
-        data: res.seller
+        data: result.data || result.seller || result
       };
 
       sessionStorage.setItem(
@@ -504,52 +343,62 @@ window.DueTrackerApp = {
           JSON.stringify(this.currentUser)
       );
 
-      this.loadSellerPortal();
+      await this.loadSellerPortal();
 
-    } catch (err) {
+    } catch (error) {
+      console.error('Seller login error:', error);
 
-      alertEl.innerHTML = `
-        <div class="alert alert-error">
-          ${this.escapeHtml(err.message)}
-        </div>
-      `;
+      this.showAlert(
+          alertBox,
+          error.message || 'Login failed.',
+          'error'
+      );
     }
   },
 
-  async handleCustomerLogin(e) {
+  sellerLogin(event) {
+    return this.handleSellerLogin(event);
+  },
 
-    e.preventDefault();
+  async handleCustomerLogin(event) {
+    if (event) {
+      event.preventDefault();
+    }
 
-    const alertEl =
-        document.getElementById(
-            'customer-login-alert'
-        );
-
-    alertEl.innerHTML = '';
+    const alertBox =
+        document.getElementById('cl-alert');
 
     const name =
-        document
-            .getElementById('cust-login-name')
-            .value
-            .trim();
+        document.getElementById('cl-name')?.value.trim();
 
     const phone =
-        document
-            .getElementById('cust-login-phone')
-            .value
-            .trim();
+        document.getElementById('cl-phone')?.value.trim();
+
+    if (!name || !phone) {
+      this.showAlert(
+          alertBox,
+          'Please enter your name and phone number.',
+          'error'
+      );
+      return;
+    }
 
     try {
-
-      const res =
+      const result =
           await DueTrackerAPI.loginCustomer(
               name,
               phone
           );
 
+      if (!result || result.success === false) {
+        throw new Error(
+            result?.message || 'Customer not found.'
+        );
+      }
+
       this.currentUser = {
         role: 'CUSTOMER',
-        data: res.customer
+        data: result.data || result.customer || result
       };
 
       sessionStorage.setItem(
@@ -557,38 +406,50 @@ window.DueTrackerApp = {
           JSON.stringify(this.currentUser)
       );
 
-      this.loadCustomerDashboard(
-          res.customer.id
+      await this.loadCustomerDashboard(
+          this.currentUser.data.id
       );
 
-    } catch (err) {
+    } catch (error) {
+      console.error('Customer login error:', error);
 
-      alertEl.innerHTML = `
-        <div class="alert alert-error">
-          ${this.escapeHtml(err.message)}
-        </div>
-      `;
+      this.showAlert(
+          alertBox,
+          error.message || 'Login failed.',
+          'error'
+      );
     }
   },
 
-  // -------------------------------------------------------------
-  // SHOP OWNER PORTAL
-  // -------------------------------------------------------------
-
-  loadSellerPortal() {
-
-    this.showView('view-seller-portal');
-
-    this.switchTab('dashboard');
+  customerLogin(event) {
+    return this.handleCustomerLogin(event);
   },
 
-  async refreshSellerPortal() {
+  async loadSellerPortal() {
+    this.showView('view-seller-portal');
+
+    this.updateTopHeader('Dashboard');
+
+    const dashboardLink =
+        document.querySelector(
+            '.sb-link[data-tab="dashboard"]'
+        );
+
+    if (dashboardLink) {
+      document.querySelectorAll('.sb-link')
+          .forEach(link => link.classList.remove('active'));
+
+      dashboardLink.classList.add('active');
+    }
 
     await this.refreshSellerDashboard();
   },
 
-  async refreshSellerDashboard() {
+  async refreshSellerPortal() {
+    return this.refreshSellerDashboard();
+  },
 
+  async refreshSellerDashboard() {
     if (
         !this.currentUser ||
         this.currentUser.role !== 'SELLER'
@@ -597,233 +458,146 @@ window.DueTrackerApp = {
     }
 
     const sellerId =
-        this.currentUser.data.id;
+        this.currentUser.data?.id;
+
+    if (!sellerId) {
+      console.error('Seller ID not found.');
+      return;
+    }
 
     try {
-
-      const summary =
+      const result =
           await DueTrackerAPI.getSellerDashboard(
               sellerId
           );
 
-      document.getElementById(
-          'stat-total-customers'
-      ).innerText =
-          summary.totalCustomers;
+      const dashboard =
+          result.data || result.dashboard || result;
 
-      document.getElementById(
-          'stat-total-purchases'
-      ).innerText =
-          '₹' +
-          this.formatCurrency(
-              summary.totalPurchases
-          );
+      const totalCustomers =
+          dashboard.totalCustomers ??
+          dashboard.customerCount ??
+          0;
 
-      document.getElementById(
-          'stat-total-payments'
-      ).innerText =
-          '₹' +
-          this.formatCurrency(
-              summary.totalPayments
-          );
+      const totalPurchases =
+          dashboard.totalPurchases ??
+          dashboard.purchaseTotal ??
+          0;
 
-      document.getElementById(
-          'stat-total-due'
-      ).innerText =
-          '₹' +
-          this.formatCurrency(
-              summary.totalPendingDue
-          );
+      const totalPayments =
+          dashboard.totalPayments ??
+          dashboard.paymentTotal ??
+          0;
 
-      if (summary.storeName) {
+      const totalDue =
+          dashboard.totalDue ??
+          dashboard.dueAmount ??
+          0;
 
-        this.currentUser.data.storeName =
-            summary.storeName;
+      this.setText(
+          'm-customers',
+          totalCustomers
+      );
 
-        this.updateTopHeader();
-      }
+      this.setText(
+          'm-purchases',
+          this.formatCurrency(totalPurchases)
+      );
+
+      this.setText(
+          'm-payments',
+          this.formatCurrency(totalPayments)
+      );
+
+      this.setText(
+          'm-dues',
+          this.formatCurrency(totalDue)
+      );
 
       const customers =
-          await DueTrackerAPI.getCustomers(
-              sellerId
-          );
+          await DueTrackerAPI.getCustomers(sellerId);
 
-      const tbody =
-          document.getElementById(
-              'seller-dash-customer-table'
-          );
+      const customerList =
+          customers.data ||
+          customers.customers ||
+          customers ||
+          [];
 
-      tbody.innerHTML = '';
+      this.renderDashboardCustomers(
+          customerList
+      );
 
-      if (customers.length === 0) {
-
-        tbody.innerHTML = `
-          <tr>
-            <td
-              colspan="7"
-              style="
-                text-align:center;
-                color:var(--text-muted);
-                padding:2rem;
-              "
-            >
-              No customers added yet.
-              Click <strong>+ Add Customer</strong>
-              to start!
-            </td>
-          </tr>
-        `;
-
-        return;
-      }
-
-      for (const cust of customers) {
-
-        const statement =
-            await DueTrackerAPI
-                .getCustomerStatement(cust.id);
-
-        const tr =
-            document.createElement('tr');
-
-        tr.innerHTML = `
-
-          <td>#${cust.id}</td>
-
-          <td>
-            <strong>
-              ${this.escapeHtml(cust.name)}
-            </strong>
-          </td>
-
-          <td>
-            ${this.escapeHtml(cust.phone)}
-          </td>
-
-          <td
-            style="
-              color:#a855f7;
-              font-weight:600;
-            "
-          >
-            ₹${this.formatCurrency(
-            statement.totalPurchases
-        )}
-          </td>
-
-          <td
-            style="
-              color:#10b981;
-              font-weight:600;
-            "
-          >
-            ₹${this.formatCurrency(
-            statement.totalPayments
-        )}
-          </td>
-
-          <td
-            style="
-              color:#f43f5e;
-              font-weight:700;
-            "
-          >
-            ₹${this.formatCurrency(
-            statement.pendingDue
-        )}
-          </td>
-
-          <td>
-
-            <div
-              style="
-                display:flex;
-                gap:.35rem;
-                flex-wrap:wrap;
-              "
-            >
-
-              <button
-                class="btn btn-secondary"
-                onclick="
-                  DueTrackerApp.openPurchaseModal(
-                    ${cust.id}
-                  )
-                "
-              >
-                + Pur
-              </button>
-
-              <button
-                class="btn btn-success"
-                onclick="
-                  DueTrackerApp.openPaymentModal(
-                    ${cust.id}
-                  )
-                "
-              >
-                + Pay
-              </button>
-
-              ${
-            statement.pendingDue > 0
-                ? `
-                  <button
-                    class="btn btn-warning"
-                    onclick="
-                      DueTrackerApp.openReminderModal(
-                        ${cust.id}
-                      )
-                    "
-                  >
-                    🔔 Remind
-                  </button>
-                `
-                : ''
-        }
-
-              <button
-                class="btn btn-info"
-                onclick="
-                  DueTrackerApp.openEditCustomerModal(
-                    ${cust.id}
-                  )
-                "
-              >
-                ✏️ Edit
-              </button>
-
-              <button
-                class="btn btn-danger"
-                onclick="
-                  DueTrackerApp.confirmDeleteCustomer(
-                    ${cust.id},
-                    '${this.escapeHtml(cust.name)}'
-                  )
-                "
-              >
-                🗑️
-              </button>
-
-            </div>
-
-          </td>
-        `;
-
-        tbody.appendChild(tr);
-      }
-
-    } catch (err) {
-
+    } catch (error) {
       console.error(
-          "Dashboard error:",
-          err
+          'Dashboard loading error:',
+          error
       );
     }
+  },
+
+  renderDashboardCustomers(customers) {
+    const table =
+        document.getElementById('dash-table');
+
+    if (!table) return;
+
+    const tbody =
+        table.querySelector('tbody') || table;
+
+    tbody.innerHTML = '';
+
+    if (!customers.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center;">
+            No customers found.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    customers.forEach(customer => {
+      const due =
+          Number(customer.dueAmount ?? customer.due ?? 0);
+
+      const purchases =
+          Number(
+              customer.totalPurchases ??
+              customer.purchases ??
+              0
+          );
+
+      const payments =
+          Number(
+              customer.totalPayments ??
+              customer.payments ??
+              0
+          );
+
+      const tr =
+          document.createElement('tr');
+
+      tr.innerHTML = `
+        <td>${this.escapeHtml(customer.name || '-')}</td>
+        <td>${this.escapeHtml(customer.phone || '-')}</td>
+        <td>${this.formatCurrency(purchases)}</td>
+        <td>${this.formatCurrency(payments)}</td>
+        <td>${this.formatCurrency(due)}</td>
+        <td>
+          <button
+            class="btn small"
+            onclick="App.openEditCustomerModal(${customer.id})">
+            Edit
+          </button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    });
   },
 
   async loadCustomersTab() {
-
     if (
         !this.currentUser ||
         this.currentUser.role !== 'SELLER'
@@ -832,179 +606,90 @@ window.DueTrackerApp = {
     }
 
     const sellerId =
-        this.currentUser.data.id;
+        this.currentUser.data?.id;
 
     try {
-
-      const customers =
+      const result =
           await DueTrackerAPI.getCustomers(
               sellerId
           );
 
-      const tbody =
-          document.getElementById(
-              'seller-customers-full-table'
-          );
+      const customers =
+          result.data ||
+          result.customers ||
+          result ||
+          [];
 
-      tbody.innerHTML = '';
+      this.renderCustomersTable(customers);
 
-      if (customers.length === 0) {
-
-        tbody.innerHTML = `
-          <tr>
-            <td
-              colspan="7"
-              style="
-                text-align:center;
-                color:var(--text-muted);
-                padding:2rem;
-              "
-            >
-              No customers added yet.
-            </td>
-          </tr>
-        `;
-
-        return;
-      }
-
-      for (const cust of customers) {
-
-        const statement =
-            await DueTrackerAPI
-                .getCustomerStatement(cust.id);
-
-        const tr =
-            document.createElement('tr');
-
-        tr.innerHTML = `
-
-          <td>#${cust.id}</td>
-
-          <td>
-            <strong>
-              ${this.escapeHtml(cust.name)}
-            </strong>
-          </td>
-
-          <td>
-            ${this.escapeHtml(cust.phone)}
-          </td>
-
-          <td>
-            ${this.escapeHtml(
-            cust.email || '-'
-        )}
-          </td>
-
-          <td>
-            ${this.escapeHtml(
-            cust.address || '-'
-        )}
-          </td>
-
-          <td
-            style="
-              color:#f43f5e;
-              font-weight:700;
-            "
-          >
-            ₹${this.formatCurrency(
-            statement.pendingDue
-        )}
-          </td>
-
-          <td>
-
-            <div
-              style="
-                display:flex;
-                gap:.35rem;
-                flex-wrap:wrap;
-              "
-            >
-
-              <button
-                class="btn btn-secondary"
-                onclick="
-                  DueTrackerApp.openPurchaseModal(
-                    ${cust.id}
-                  )
-                "
-              >
-                + Pur
-              </button>
-
-              <button
-                class="btn btn-success"
-                onclick="
-                  DueTrackerApp.openPaymentModal(
-                    ${cust.id}
-                  )
-                "
-              >
-                + Pay
-              </button>
-
-              ${
-            statement.pendingDue > 0
-                ? `
-                  <button
-                    class="btn btn-warning"
-                    onclick="
-                      DueTrackerApp.openReminderModal(
-                        ${cust.id}
-                      )
-                    "
-                  >
-                    🔔 Remind
-                  </button>
-                `
-                : ''
-        }
-
-              <button
-                class="btn btn-info"
-                onclick="
-                  DueTrackerApp.openEditCustomerModal(
-                    ${cust.id}
-                  )
-                "
-              >
-                ✏️ Edit
-              </button>
-
-              <button
-                class="btn btn-danger"
-                onclick="
-                  DueTrackerApp.confirmDeleteCustomer(
-                    ${cust.id},
-                    '${this.escapeHtml(cust.name)}'
-                  )
-                "
-              >
-                🗑️
-              </button>
-
-            </div>
-
-          </td>
-        `;
-
-        tbody.appendChild(tr);
-      }
-
-    } catch (err) {
-
+    } catch (error) {
       console.error(
-          "Customers tab error:",
-          err
+          'Customers loading error:',
+          error
       );
     }
+  },
+
+  renderCustomersTable(customers) {
+    const table =
+        document.getElementById('cust-table');
+
+    if (!table) return;
+
+    const tbody =
+        table.querySelector('tbody') || table;
+
+    tbody.innerHTML = '';
+
+    if (!customers.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center;">
+            No customers found.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    customers.forEach(customer => {
+      const due =
+          Number(customer.dueAmount ?? customer.due ?? 0);
+
+      const tr =
+          document.createElement('tr');
+
+      tr.innerHTML = `
+        <td>${this.escapeHtml(customer.name || '-')}</td>
+        <td>${this.escapeHtml(customer.phone || '-')}</td>
+        <td>${this.escapeHtml(customer.email || '-')}</td>
+        <td>${this.formatCurrency(
+          customer.totalPurchases || 0
+      )}</td>
+        <td>${this.formatCurrency(
+          customer.totalPayments || 0
+      )}</td>
+        <td>${this.formatCurrency(due)}</td>
+        <td>
+          <button
+            class="btn small"
+            onclick="App.openEditCustomerModal(${customer.id})">
+            Edit
+          </button>
+
+          <button
+            class="btn small danger"
+            onclick="App.confirmDeleteCustomer(${customer.id})">
+            Delete
+          </button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    });
   },
 
   async loadTransactionsTab() {
-
     if (
         !this.currentUser ||
         this.currentUser.role !== 'SELLER'
@@ -1013,1111 +698,1240 @@ window.DueTrackerApp = {
     }
 
     const sellerId =
-        this.currentUser.data.id;
+        this.currentUser.data?.id;
 
     try {
-
-      const customers =
+      const result =
           await DueTrackerAPI.getCustomers(
               sellerId
           );
 
+      const customers =
+          result.data ||
+          result.customers ||
+          result ||
+          [];
+
+      const table =
+          document.getElementById('txn-table');
+
+      if (!table) return;
+
       const tbody =
-          document.getElementById(
-              'seller-all-transactions-table'
-          );
+          table.querySelector('tbody') || table;
 
       tbody.innerHTML = '';
 
-      let allTxs = [];
+      let hasTransactions = false;
 
-      for (const cust of customers) {
+      for (const customer of customers) {
+        try {
+          const statement =
+              await DueTrackerAPI.getCustomerStatement(
+                  customer.id
+              );
 
-        const stmt =
-            await DueTrackerAPI
-                .getCustomerStatement(cust.id);
+          const transactions =
+              statement.data ||
+              statement.transactions ||
+              statement ||
+              [];
 
-        stmt.transactions.forEach(t => {
+          if (!Array.isArray(transactions)) {
+            continue;
+          }
 
-          allTxs.push({
-            ...t,
-            customerName: cust.name
+          transactions.forEach(txn => {
+            hasTransactions = true;
+
+            const tr =
+                document.createElement('tr');
+
+            const type =
+                String(
+                    txn.type ||
+                    txn.transactionType ||
+                    ''
+                ).toUpperCase();
+
+            tr.innerHTML = `
+              <td>${this.escapeHtml(
+                customer.name || '-'
+            )}</td>
+
+              <td>${this.escapeHtml(
+                type || '-'
+            )}</td>
+
+              <td>${this.formatCurrency(
+                txn.amount || 0
+            )}</td>
+
+              <td>${this.escapeHtml(
+                txn.description || '-'
+            )}</td>
+
+              <td>${this.escapeHtml(
+                txn.createdAt ||
+                txn.date ||
+                '-'
+            )}</td>
+            `;
+
+            tbody.appendChild(tr);
           });
 
-        });
+        } catch (e) {
+          console.error(
+              `Could not load transactions for customer ${customer.id}`,
+              e
+          );
+        }
       }
 
-      allTxs.sort(
-          (a, b) =>
-              new Date(b.transactionDate) -
-              new Date(a.transactionDate)
-      );
-
-      if (allTxs.length === 0) {
-
+      if (!hasTransactions) {
         tbody.innerHTML = `
           <tr>
-            <td
-              colspan="5"
-              style="
-                text-align:center;
-                color:var(--text-muted);
-                padding:2rem;
-              "
-            >
-              No transaction logs recorded.
+            <td colspan="5" style="text-align:center;">
+              No transactions found.
             </td>
           </tr>
         `;
-
-        return;
       }
 
-      allTxs.forEach(t => {
-
-        const isPurchase =
-            t.type === 'PURCHASE';
-
-        const dateStr =
-            new Date(
-                t.transactionDate
-            ).toLocaleString();
-
-        const tr =
-            document.createElement('tr');
-
-        tr.innerHTML = `
-
-          <td
-            style="
-              color:var(--text-muted);
-              font-size:.85rem;
-            "
-          >
-            ${dateStr}
-          </td>
-
-          <td>
-            <strong>
-              ${this.escapeHtml(
-            t.customerName
-        )}
-            </strong>
-          </td>
-
-          <td>
-            <span
-              class="type-badge ${
-            isPurchase
-                ? 'type-purchase'
-                : 'type-payment'
-        }"
-            >
-              ${
-            isPurchase
-                ? '🛒 PURCHASE'
-                : '💵 PAYMENT'
-        }
-            </span>
-          </td>
-
-          <td
-            style="
-              font-weight:700;
-              color:${
-            isPurchase
-                ? '#f43f5e'
-                : '#10b981'
-        };
-            "
-          >
-            ${
-            isPurchase
-                ? '+'
-                : '-'
-        }
-            ₹${this.formatCurrency(t.amount)}
-          </td>
-
-          <td>
-            ${this.escapeHtml(
-            t.description || '-'
-        )}
-          </td>
-        `;
-
-        tbody.appendChild(tr);
-      });
-
-    } catch (err) {
-
+    } catch (error) {
       console.error(
-          "Transactions error:",
-          err
+          'Transactions loading error:',
+          error
       );
     }
   },
 
-  loadSettingsTab() {
-
-    if (!this.currentUser) {
-      return;
-    }
-
-    const s =
-        this.currentUser.data;
-
-    document.getElementById(
-        'settings-store-name'
-    ).value =
-        s.storeName || '';
-
-    document.getElementById(
-        'settings-phone'
-    ).value =
-        s.phone || '';
-
-    document.getElementById(
-        'settings-email'
-    ).value =
-        s.email || '';
-  },
-
-  handleSaveSettings(e) {
-
-    e.preventDefault();
-
-    const newStoreName =
-        document
-            .getElementById(
-                'settings-store-name'
-            )
-            .value
-            .trim();
-
+  async loadSettingsTab() {
     if (
-        newStoreName &&
-        this.currentUser
+        !this.currentUser ||
+        this.currentUser.role !== 'SELLER'
     ) {
-
-      this.currentUser.data.storeName =
-          newStoreName;
-
-      sessionStorage.setItem(
-          'dt_active_session',
-          JSON.stringify(
-              this.currentUser
-          )
-      );
-
-      this.updateTopHeader();
-
-      alert(
-          "Store settings saved successfully!"
-      );
-    }
-  },
-
-  // -------------------------------------------------------------
-  // EDIT & DELETE CUSTOMER
-  // -------------------------------------------------------------
-
-  async openEditCustomerModal(customerId) {
-
-    this.closeModals();
-
-    if (!this.currentUser) {
       return;
     }
 
-    const sellerId =
-        this.currentUser.data.id;
+    const seller =
+        this.currentUser.data || {};
 
-    const customers =
-        await DueTrackerAPI.getCustomers(
-            sellerId
-        );
-
-    const cust =
-        customers.find(
-            c => c.id == customerId
-        );
-
-    if (!cust) {
-      alert("Customer not found!");
-      return;
-    }
-
-    document.getElementById(
-        'm-edit-cust-id'
-    ).value = cust.id;
-
-    document.getElementById(
-        'm-edit-cust-name'
-    ).value = cust.name;
-
-    document.getElementById(
-        'm-edit-cust-phone'
-    ).value = cust.phone;
-
-    document.getElementById(
-        'm-edit-cust-email'
-    ).value =
-        cust.email || '';
-
-    document.getElementById(
-        'm-edit-cust-address'
-    ).value =
-        cust.address || '';
-
-    document
-        .getElementById(
-            'modal-edit-customer'
-        )
-        .classList.add('open');
-  },
-
-  async handleSaveEditCustomer(e) {
-
-    e.preventDefault();
-
-    const customerId =
-        document.getElementById(
-            'm-edit-cust-id'
-        ).value;
-
-    const updatedData = {
-
-      name:
-          document
-              .getElementById(
-                  'm-edit-cust-name'
-              )
-              .value
-              .trim(),
-
-      phone:
-          document
-              .getElementById(
-                  'm-edit-cust-phone'
-              )
-              .value
-              .trim(),
-
-      email:
-          document
-              .getElementById(
-                  'm-edit-cust-email'
-              )
-              .value
-              .trim(),
-
-      address:
-          document
-              .getElementById(
-                  'm-edit-cust-address'
-              )
-              .value
-              .trim()
-    };
-
-    try {
-
-      await DueTrackerAPI.updateCustomer(
-          customerId,
-          updatedData
-      );
-
-      this.closeModals();
-
-      this.switchTab(
-          this.activeTab
-      );
-
-    } catch (err) {
-
-      alert(
-          "Error updating customer: " +
-          err.message
-      );
-    }
-  },
-
-  async confirmDeleteCustomer(
-      customerId,
-      customerName
-  ) {
-
-    if (
-        confirm(
-            `Are you sure you want to delete customer "${customerName}"? All transaction history for this customer will also be deleted.`
-        )
-    ) {
-
-      try {
-
-        await DueTrackerAPI.deleteCustomer(
-            customerId
-        );
-
-        this.switchTab(
-            this.activeTab
-        );
-
-      } catch (err) {
-
-        alert(
-            "Error deleting customer: " +
-            err.message
-        );
-      }
-    }
-  },
-
-  // -------------------------------------------------------------
-  // PAYMENT REMINDER
-  // -------------------------------------------------------------
-
-  async openReminderModal(customerId) {
-
-    this.closeModals();
-
-    const statement =
-        await DueTrackerAPI
-            .getCustomerStatement(
-                customerId
-            );
-
-    const cust =
-        statement.customer;
-
-    const storeName =
-        (
-            this.currentUser &&
-            this.currentUser.data.storeName
-        ) || 'Our Shop';
-
-    const dueAmount =
-        this.formatCurrency(
-            statement.pendingDue
-        );
-
-    const message =
-        `Hello ${cust.name}, this is a payment reminder from *${storeName}*. Your current pending credit due is *₹${dueAmount}*. Kindly make the payment online or visit our shop. Thank you!`;
-
-    const previewBox =
-        document.getElementById(
-            'reminder-preview-box'
-        );
-
-    previewBox.innerHTML = `
-
-      <div
-        style="
-          font-weight:700;
-          color:#f59e0b;
-          margin-bottom:.5rem;
-        "
-      >
-        Reminder Message Preview:
-      </div>
-
-      <p
-        style="
-          white-space:pre-wrap;
-          font-style:italic;
-          color:var(--text-main);
-        "
-      >
-        ${this.escapeHtml(message)}
-      </p>
-
-      <div
-        style="
-          margin-top:.75rem;
-          font-size:.85rem;
-          color:var(--text-muted);
-        "
-      >
-        Recipient Phone:
-        <strong>${cust.phone}</strong>
-      </div>
-    `;
-
-    const waBtn =
-        document.getElementById(
-            'btn-wa-reminder'
-        );
-
-    waBtn.onclick = () => {
-
-      const cleanPhone =
-          cust.phone.replace(
-              /[^0-9]/g,
-              ''
-          );
-
-      const waPhone =
-          cleanPhone.length === 10
-              ? '91' + cleanPhone
-              : cleanPhone;
-
-      const waUrl =
-          `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`;
-
-      window.open(
-          waUrl,
-          '_blank'
-      );
-    };
-
-    const copyBtn =
-        document.getElementById(
-            'btn-copy-reminder'
-        );
-
-    copyBtn.onclick = () => {
-
-      navigator.clipboard.writeText(
-          message
-      );
-
-      alert(
-          "Reminder message copied to clipboard!"
-      );
-    };
-
-    document
-        .getElementById(
-            'modal-send-reminder'
-        )
-        .classList.add('open');
-  },
-
-  // -------------------------------------------------------------
-  // CUSTOMER DASHBOARD
-  // -------------------------------------------------------------
-
-  async loadCustomerDashboard(
-      customerId
-  ) {
-
-    this.showView(
-        'view-customer-dashboard'
+    this.setValue(
+        's-store',
+        seller.storeName ||
+        seller.store ||
+        ''
     );
+
+    this.setValue(
+        's-name',
+        seller.name || ''
+    );
+
+    this.setValue(
+        's-email',
+        seller.email || ''
+    );
+
+    this.setValue(
+        's-phone',
+        seller.phone || ''
+    );
+
+    this.applyTheme(this.currentTheme);
+  },
+
+  async handleSaveSettings(event) {
+    if (event) {
+      event.preventDefault();
+    }
+
+    if (!this.currentUser) return;
+
+    const store =
+        document.getElementById('s-store')?.value.trim();
+
+    const name =
+        document.getElementById('s-name')?.value.trim();
+
+    const email =
+        document.getElementById('s-email')?.value.trim();
+
+    const phone =
+        document.getElementById('s-phone')?.value.trim();
+
+    this.currentUser.data = {
+      ...this.currentUser.data,
+      storeName: store,
+      name,
+      email,
+      phone
+    };
+
+    sessionStorage.setItem(
+        'dt_active_session',
+        JSON.stringify(this.currentUser)
+    );
+
+    this.updateTopHeader();
+
+    alert('Settings saved successfully.');
+  },
+
+  saveSettings(event) {
+    return this.handleSaveSettings(event);
+  },
+
+  async loadCustomerDashboard(customerId) {
+    this.showView('view-customer-dashboard');
 
     await this.refreshCustomerDashboard(
         customerId
     );
   },
 
-  async refreshCustomerDashboard(
-      customerId
-  ) {
+  async refreshCustomerDashboard(customerId) {
+    if (
+        !customerId &&
+        this.currentUser
+    ) {
+      customerId =
+          this.currentUser.data?.id;
+    }
+
+    if (!customerId) {
+      console.error(
+          'Customer ID not found.'
+      );
+      return;
+    }
 
     try {
-
-      const data =
-          await DueTrackerAPI
-              .getCustomerStatement(
-                  customerId
-              );
-
-      const cust =
-          data.customer;
-
-      document.getElementById(
-          'cust-profile-name'
-      ).innerText =
-          cust.name;
-
-      document.getElementById(
-          'cust-profile-id'
-      ).innerText =
-          `#${cust.id}`;
-
-      document.getElementById(
-          'cust-profile-phone'
-      ).innerText =
-          cust.phone;
-
-      document.getElementById(
-          'cust-stat-purchases'
-      ).innerText =
-          '₹' +
-          this.formatCurrency(
-              data.totalPurchases
+      const result =
+          await DueTrackerAPI.getCustomerStatement(
+              customerId
           );
 
-      document.getElementById(
-          'cust-stat-payments'
-      ).innerText =
-          '₹' +
-          this.formatCurrency(
-              data.totalPayments
-          );
+      const statement =
+          result.data ||
+          result.statement ||
+          result;
 
-      document.getElementById(
-          'cust-stat-due'
-      ).innerText =
-          '₹' +
-          this.formatCurrency(
-              data.pendingDue
-          );
+      const customer =
+          statement.customer ||
+          this.currentUser?.data ||
+          {};
 
-      const payContainer =
-          document.getElementById(
-              'cust-pay-container'
-          );
+      const transactions =
+          statement.transactions ||
+          statement.data ||
+          [];
 
-      if (data.pendingDue > 0) {
+      this.setText(
+          'cp-name',
+          customer.name || '-'
+      );
 
-        payContainer.innerHTML = `
+      this.setText(
+          'cp-phone',
+          customer.phone || '-'
+      );
 
-          <button
-            class="btn btn-pay"
-            onclick="
-              DueTrackerApp.triggerCustomerOnlinePayment(
-                ${cust.id},
-                ${data.pendingDue}
-              )
-            "
-          >
-            💳 PAY NOW
-            (₹${this.formatCurrency(
-            data.pendingDue
-        )})
-          </button>
-        `;
+      let purchases = 0;
+      let payments = 0;
 
-      } else {
+      if (Array.isArray(transactions)) {
+        transactions.forEach(txn => {
+          const amount =
+              Number(txn.amount || 0);
 
-        payContainer.innerHTML = `
+          const type =
+              String(
+                  txn.type ||
+                  txn.transactionType ||
+                  ''
+              ).toUpperCase();
 
-          <div
-            style="
-              background:rgba(
-                16,
-                185,
-                129,
-                .15
-              );
-              border:1px solid rgba(
-                16,
-                185,
-                129,
-                .3
-              );
-              color:#10b981;
-              padding:.75rem 1.5rem;
-              border-radius:50px;
-              font-weight:700;
-            "
-          >
-            ✓ All Dues Paid!
-          </div>
-        `;
+          if (
+              type === 'PURCHASE' ||
+              type === 'CREDIT'
+          ) {
+            purchases += amount;
+          }
+
+          if (
+              type === 'PAYMENT' ||
+              type === 'PAID'
+          ) {
+            payments += amount;
+          }
+        });
       }
 
-      const tbody =
-          document.getElementById(
-              'cust-statement-table-body'
-          );
+      const due =
+          purchases - payments;
 
-      tbody.innerHTML = '';
+      this.setText(
+          'cp-purchases',
+          this.formatCurrency(purchases)
+      );
 
-      if (
-          data.transactions.length === 0
-      ) {
+      this.setText(
+          'cp-payments',
+          this.formatCurrency(payments)
+      );
 
-        tbody.innerHTML = `
-          <tr>
-            <td
-              colspan="4"
-              style="
-                text-align:center;
-                color:var(--text-muted);
-                padding:2rem;
-              "
-            >
-              No statement logs found.
-            </td>
-          </tr>
-        `;
+      this.setText(
+          'cp-due',
+          this.formatCurrency(due)
+      );
 
-        return;
-      }
+      this.renderCustomerTransactions(
+          transactions
+      );
 
-      data.transactions.forEach(t => {
+      this.renderCustomerPaymentArea(
+          customer,
+          due
+      );
 
-        const isPurchase =
-            t.type === 'PURCHASE';
-
-        const dateStr =
-            new Date(
-                t.transactionDate
-            ).toLocaleString();
-
-        const tr =
-            document.createElement('tr');
-
-        tr.innerHTML = `
-
-          <td
-            style="
-              color:var(--text-muted);
-              font-size:.85rem;
-            "
-          >
-            ${dateStr}
-          </td>
-
-          <td>
-
-            <span
-              class="type-badge ${
-            isPurchase
-                ? 'type-purchase'
-                : 'type-payment'
-        }"
-            >
-              ${
-            isPurchase
-                ? '🛒 PURCHASE'
-                : '💵 PAYMENT'
-        }
-            </span>
-
-          </td>
-
-          <td
-            style="
-              font-weight:700;
-              color:${
-            isPurchase
-                ? '#f43f5e'
-                : '#10b981'
-        };
-            "
-          >
-            ${
-            isPurchase
-                ? '+'
-                : '-'
-        }
-            ₹${this.formatCurrency(
-            t.amount
-        )}
-          </td>
-
-          <td>
-            ${this.escapeHtml(
-            t.description || '-'
-        )}
-          </td>
-        `;
-
-        tbody.appendChild(tr);
-      });
-
-    } catch (err) {
-
+    } catch (error) {
       console.error(
-          "Customer dashboard error:",
-          err
+          'Customer dashboard error:',
+          error
       );
     }
   },
 
-  triggerCustomerOnlinePayment(
-      customerId,
-      amount
-  ) {
+  renderCustomerTransactions(transactions) {
+    const table =
+        document.getElementById('cp-txn-table');
 
-    if (!this.currentUser) {
+    if (!table) return;
+
+    const tbody =
+        table.querySelector('tbody') || table;
+
+    tbody.innerHTML = '';
+
+    if (
+        !Array.isArray(transactions) ||
+        transactions.length === 0
+    ) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center;">
+            No transactions found.
+          </td>
+        </tr>
+      `;
       return;
     }
 
-    DueTrackerRazorpay.processPayment(
-        amount,
-        this.currentUser.data,
-        async (res) => {
+    transactions.forEach(txn => {
+      const tr =
+          document.createElement('tr');
+
+      tr.innerHTML = `
+        <td>${this.escapeHtml(
+          txn.type ||
+          txn.transactionType ||
+          '-'
+      )}</td>
+
+        <td>${this.formatCurrency(
+          txn.amount || 0
+      )}</td>
+
+        <td>${this.escapeHtml(
+          txn.description || '-'
+      )}</td>
+
+        <td>${this.escapeHtml(
+          txn.createdAt ||
+          txn.date ||
+          '-'
+      )}</td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+  },
+
+  renderCustomerPaymentArea(customer, due) {
+    const area =
+        document.getElementById('cp-pay-area');
+
+    if (!area) return;
+
+    if (due <= 0) {
+      area.innerHTML = `
+        <div class="payment-success">
+          <strong>No outstanding due.</strong>
+          <p>Your account is settled.</p>
+        </div>
+      `;
+      return;
+    }
+
+    area.innerHTML = `
+      <div class="payment-box">
+        <div>
+          <strong>Outstanding Due</strong>
+          <div class="payment-due">
+            ${this.formatCurrency(due)}
+          </div>
+        </div>
+
+        <button
+          class="btn primary"
+          onclick="App.triggerCustomerOnlinePayment(${customer.id}, ${due})">
+          Pay Online
+        </button>
+      </div>
+    `;
+  },
+
+  async triggerCustomerOnlinePayment(
+      customerId,
+      amount
+  ) {
+    try {
+      const response =
+          await fetch(
+              '/api/payment/create-order',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type':
+                      'application/json'
+                },
+                body: JSON.stringify({
+                  customerId,
+                  amount
+                })
+              }
+          );
+
+      if (!response.ok) {
+        throw new Error(
+            'Unable to create payment order.'
+        );
+      }
+
+      const order =
+          await response.json();
+
+      if (
+          typeof Razorpay === 'undefined'
+      ) {
+        throw new Error(
+            'Razorpay checkout is not loaded.'
+        );
+      }
+
+      const options = {
+        key:
+            order.keyId ||
+            order.key ||
+            order.razorpayKey,
+
+        amount:
+        order.amount,
+
+        currency:
+            order.currency || 'INR',
+
+        name:
+            'DueTracker',
+
+        description:
+            'Due Payment',
+
+        order_id:
+            order.orderId ||
+            order.id,
+
+        handler: async response => {
+          console.log(
+              'Payment successful:',
+              response
+          );
 
           try {
-
             await DueTrackerAPI.recordPayment(
                 customerId,
-                res.amount,
-                'Online Razorpay Payment',
-                res.paymentId
+                amount,
+                'Online Payment',
+                response.razorpay_payment_id
             );
 
             alert(
-                `Payment of ₹${res.amount} successful! Ref: ${res.paymentId}`
+                'Payment successful and recorded.'
             );
 
             await this.refreshCustomerDashboard(
                 customerId
             );
 
-          } catch (err) {
+          } catch (error) {
+            console.error(
+                'Payment recording error:',
+                error
+            );
 
             alert(
-                "Error saving payment: " +
-                err.message
+                'Payment succeeded, but recording failed. Please contact the seller.'
             );
           }
+        },
+
+        prefill: {
+          name:
+              this.currentUser?.data?.name ||
+              ''
+        },
+
+        theme: {
+          color: '#22c55e'
         }
-    );
+      };
+
+      const razorpay =
+          new Razorpay(options);
+
+      razorpay.open();
+
+    } catch (error) {
+      console.error(
+          'Online payment error:',
+          error
+      );
+
+      alert(
+          error.message ||
+          'Unable to start payment.'
+      );
+    }
   },
 
-  // -------------------------------------------------------------
-  // MODALS
-  // -------------------------------------------------------------
-
   closeModals() {
-
     document
-        .querySelectorAll(
-            '.modal-overlay'
-        )
-        .forEach(m =>
-            m.classList.remove('open')
-        );
+        .querySelectorAll('.overlay')
+        .forEach(modal => {
+          modal.classList.remove('active');
+          modal.style.display = 'none';
+        });
+  },
+
+  closeModal(modalId) {
+    const modal =
+        document.getElementById(modalId);
+
+    if (!modal) return;
+
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  },
+
+  openModal(modalId) {
+    const modal =
+        document.getElementById(modalId);
+
+    if (!modal) {
+      console.error(
+          `Modal not found: ${modalId}`
+      );
+      return;
+    }
+
+    modal.classList.add('active');
+    modal.style.display = 'flex';
   },
 
   openAddCustomerModal() {
+    this.openModal('modal-add-cust');
 
-    this.closeModals();
-
-    document.getElementById(
-        'm-cust-name'
-    ).value = '';
-
-    document.getElementById(
-        'm-cust-phone'
-    ).value = '';
-
-    document.getElementById(
-        'm-cust-email'
-    ).value = '';
-
-    document.getElementById(
-        'm-cust-address'
-    ).value = '';
-
-    document
-        .getElementById(
-            'modal-add-customer'
-        )
-        .classList.add('open');
+    this.setValue('ac-name', '');
+    this.setValue('ac-phone', '');
+    this.setValue('ac-email', '');
+    this.setValue('ac-addr', '');
   },
 
-  async handleSaveCustomer(e) {
+  async handleSaveCustomer(event) {
+    if (event) {
+      event.preventDefault();
+    }
 
-    e.preventDefault();
-
-    if (!this.currentUser) {
+    if (
+        !this.currentUser ||
+        this.currentUser.role !== 'SELLER'
+    ) {
       return;
     }
 
-    const data = {
+    const name =
+        document.getElementById('ac-name')
+            ?.value.trim();
 
-      name:
-          document
-              .getElementById(
-                  'm-cust-name'
-              )
-              .value
-              .trim(),
+    const phone =
+        document.getElementById('ac-phone')
+            ?.value.trim();
 
-      phone:
-          document
-              .getElementById(
-                  'm-cust-phone'
-              )
-              .value
-              .trim(),
+    const email =
+        document.getElementById('ac-email')
+            ?.value.trim();
 
-      email:
-          document
-              .getElementById(
-                  'm-cust-email'
-              )
-              .value
-              .trim(),
+    const address =
+        document.getElementById('ac-addr')
+            ?.value.trim();
 
-      address:
-          document
-              .getElementById(
-                  'm-cust-address'
-              )
-              .value
-              .trim()
-    };
+    if (!name || !phone) {
+      alert(
+          'Name and phone are required.'
+      );
+      return;
+    }
 
     try {
-
       await DueTrackerAPI.addCustomer(
           this.currentUser.data.id,
-          data
+          {
+            name,
+            phone,
+            email,
+            address
+          }
       );
 
-      this.closeModals();
-
-      this.switchTab(
-          this.activeTab
-      );
-
-    } catch (err) {
+      this.closeModal('modal-add-cust');
 
       alert(
-          "Error: " +
-          err.message
+          'Customer added successfully.'
+      );
+
+      await this.refreshSellerDashboard();
+
+      if (
+          this.activeTab === 'customers'
+      ) {
+        await this.loadCustomersTab();
+      }
+
+    } catch (error) {
+      console.error(
+          'Add customer error:',
+          error
+      );
+
+      alert(
+          error.message ||
+          'Unable to add customer.'
       );
     }
   },
 
-  async openPurchaseModal(
-      preselectCustId = null
-  ) {
+  addCustomer(event) {
+    return this.handleSaveCustomer(event);
+  },
 
-    this.closeModals();
+  async openEditCustomerModal(customerId) {
+    try {
+      const sellerId =
+          this.currentUser?.data?.id;
 
-    if (!this.currentUser) {
+      if (!sellerId) return;
+
+      const result =
+          await DueTrackerAPI.getCustomers(
+              sellerId
+          );
+
+      const customers =
+          result.data ||
+          result.customers ||
+          result ||
+          [];
+
+      const customer =
+          customers.find(
+              c => Number(c.id) === Number(customerId)
+          );
+
+      if (!customer) {
+        alert('Customer not found.');
+        return;
+      }
+
+      this.setValue(
+          'ec-id',
+          customer.id
+      );
+
+      this.setValue(
+          'ec-name',
+          customer.name || ''
+      );
+
+      this.setValue(
+          'ec-phone',
+          customer.phone || ''
+      );
+
+      this.setValue(
+          'ec-email',
+          customer.email || ''
+      );
+
+      this.setValue(
+          'ec-addr',
+          customer.address || ''
+      );
+
+      this.openModal('modal-edit-cust');
+
+    } catch (error) {
+      console.error(
+          'Open edit customer error:',
+          error
+      );
+    }
+  },
+
+  async handleSaveEditCustomer(event) {
+    if (event) {
+      event.preventDefault();
+    }
+
+    const id =
+        document.getElementById('ec-id')
+            ?.value;
+
+    const name =
+        document.getElementById('ec-name')
+            ?.value.trim();
+
+    const phone =
+        document.getElementById('ec-phone')
+            ?.value.trim();
+
+    const email =
+        document.getElementById('ec-email')
+            ?.value.trim();
+
+    const address =
+        document.getElementById('ec-addr')
+            ?.value.trim();
+
+    if (!id || !name || !phone) {
+      alert(
+          'Customer ID, name and phone are required.'
+      );
       return;
     }
 
-    const customers =
-        await DueTrackerAPI.getCustomers(
-            this.currentUser.data.id
-        );
+    try {
+      await DueTrackerAPI.updateCustomer(
+          id,
+          {
+            name,
+            phone,
+            email,
+            address
+          }
+      );
 
-    const select =
-        document.getElementById(
-            'm-pur-customer'
-        );
+      this.closeModal('modal-edit-cust');
 
-    select.innerHTML =
-        customers
-            .map(c =>
-                `<option value="${c.id}">
-            ${this.escapeHtml(c.name)}
-            (${this.escapeHtml(c.phone)})
-          </option>`
-            )
-            .join('');
+      alert(
+          'Customer updated successfully.'
+      );
 
-    if (preselectCustId) {
-      select.value =
-          preselectCustId;
+      await this.refreshSellerDashboard();
+
+      if (
+          this.activeTab === 'customers'
+      ) {
+        await this.loadCustomersTab();
+      }
+
+    } catch (error) {
+      console.error(
+          'Update customer error:',
+          error
+      );
+
+      alert(
+          error.message ||
+          'Unable to update customer.'
+      );
     }
-
-    document.getElementById(
-        'm-pur-amount'
-    ).value = '';
-
-    document.getElementById(
-        'm-pur-desc'
-    ).value = '';
-
-    document
-        .getElementById(
-            'modal-record-purchase'
-        )
-        .classList.add('open');
   },
 
-  async handleSavePurchase(e) {
+  updateCustomer(event) {
+    return this.handleSaveEditCustomer(event);
+  },
 
-    e.preventDefault();
-
-    const custId =
-        document.getElementById(
-            'm-pur-customer'
-        ).value;
-
-    const amount =
-        document.getElementById(
-            'm-pur-amount'
-        ).value;
-
-    const desc =
-        document.getElementById(
-            'm-pur-desc'
-        ).value.trim();
+  async confirmDeleteCustomer(customerId) {
+    if (
+        !confirm(
+            'Are you sure you want to delete this customer?'
+        )
+    ) {
+      return;
+    }
 
     try {
+      await DueTrackerAPI.deleteCustomer(
+          customerId
+      );
 
+      alert(
+          'Customer deleted successfully.'
+      );
+
+      await this.refreshSellerDashboard();
+
+      if (
+          this.activeTab === 'customers'
+      ) {
+        await this.loadCustomersTab();
+      }
+
+    } catch (error) {
+      console.error(
+          'Delete customer error:',
+          error
+      );
+
+      alert(
+          error.message ||
+          'Unable to delete customer.'
+      );
+    }
+  },
+
+  async openPurchaseModal() {
+    const select =
+        document.getElementById('pur-cust');
+
+    if (!select) return;
+
+    await this.populateCustomerSelect(
+        select
+    );
+
+    this.setValue('pur-amt', '');
+    this.setValue('pur-desc', '');
+
+    this.openModal('modal-purchase');
+  },
+
+  async handleSavePurchase(event) {
+    if (event) {
+      event.preventDefault();
+    }
+
+    const customerId =
+        document.getElementById('pur-cust')
+            ?.value;
+
+    const amount =
+        Number(
+            document.getElementById('pur-amt')
+                ?.value
+        );
+
+    const description =
+        document.getElementById('pur-desc')
+            ?.value.trim();
+
+    if (
+        !customerId ||
+        !amount ||
+        amount <= 0
+    ) {
+      alert(
+          'Please enter a valid customer and amount.'
+      );
+      return;
+    }
+
+    try {
       await DueTrackerAPI.recordPurchase(
-          custId,
+          customerId,
           amount,
-          desc
+          description
       );
 
-      this.closeModals();
-
-      this.switchTab(
-          this.activeTab
-      );
-
-    } catch (err) {
+      this.closeModal('modal-purchase');
 
       alert(
-          "Error: " +
-          err.message
+          'Purchase recorded successfully.'
+      );
+
+      await this.refreshSellerDashboard();
+
+      if (
+          this.activeTab === 'customers'
+      ) {
+        await this.loadCustomersTab();
+      }
+
+    } catch (error) {
+      console.error(
+          'Purchase error:',
+          error
+      );
+
+      alert(
+          error.message ||
+          'Unable to record purchase.'
       );
     }
   },
 
-  async openPaymentModal(
-      preselectCustId = null
-  ) {
+  addPurchase(event) {
+    return this.handleSavePurchase(event);
+  },
 
-    this.closeModals();
+  async openPaymentModal() {
+    const select =
+        document.getElementById('pay-cust');
 
-    if (!this.currentUser) {
+    if (!select) return;
+
+    await this.populateCustomerSelect(
+        select
+    );
+
+    this.setValue('pay-amt', '');
+    this.setValue('pay-desc', '');
+
+    this.openModal('modal-payment');
+  },
+
+  async handleSavePayment(event) {
+    if (event) {
+      event.preventDefault();
+    }
+
+    const customerId =
+        document.getElementById('pay-cust')
+            ?.value;
+
+    const amount =
+        Number(
+            document.getElementById('pay-amt')
+                ?.value
+        );
+
+    const description =
+        document.getElementById('pay-desc')
+            ?.value.trim();
+
+    if (
+        !customerId ||
+        !amount ||
+        amount <= 0
+    ) {
+      alert(
+          'Please enter a valid customer and amount.'
+      );
       return;
     }
 
-    const customers =
-        await DueTrackerAPI.getCustomers(
-            this.currentUser.data.id
-        );
-
-    const select =
-        document.getElementById(
-            'm-pay-customer'
-        );
-
-    select.innerHTML =
-        customers
-            .map(c =>
-                `<option value="${c.id}">
-            ${this.escapeHtml(c.name)}
-            (${this.escapeHtml(c.phone)})
-          </option>`
-            )
-            .join('');
-
-    if (preselectCustId) {
-      select.value =
-          preselectCustId;
-    }
-
-    document.getElementById(
-        'm-pay-amount'
-    ).value = '';
-
-    document.getElementById(
-        'm-pay-desc'
-    ).value = '';
-
-    document
-        .getElementById(
-            'modal-record-payment'
-        )
-        .classList.add('open');
-  },
-
-  async handleSavePayment(e) {
-
-    e.preventDefault();
-
-    const custId =
-        document.getElementById(
-            'm-pay-customer'
-        ).value;
-
-    const amount =
-        document.getElementById(
-            'm-pay-amount'
-        ).value;
-
-    const desc =
-        document.getElementById(
-            'm-pay-desc'
-        ).value.trim();
-
     try {
-
       await DueTrackerAPI.recordPayment(
-          custId,
+          customerId,
           amount,
-          desc
+          description
       );
 
-      this.closeModals();
-
-      this.switchTab(
-          this.activeTab
-      );
-
-    } catch (err) {
+      this.closeModal('modal-payment');
 
       alert(
-          "Error: " +
-          err.message
+          'Payment recorded successfully.'
+      );
+
+      await this.refreshSellerDashboard();
+
+      if (
+          this.activeTab === 'customers'
+      ) {
+        await this.loadCustomersTab();
+      }
+
+    } catch (error) {
+      console.error(
+          'Payment error:',
+          error
+      );
+
+      alert(
+          error.message ||
+          'Unable to record payment.'
       );
     }
   },
 
-  formatCurrency(val) {
+  addPayment(event) {
+    return this.handleSavePayment(event);
+  },
 
-    return Number(
-        val || 0
-    ).toLocaleString(
+  async populateCustomerSelect(select) {
+    if (!select) return;
+
+    select.innerHTML =
+        '<option value="">Select Customer</option>';
+
+    const sellerId =
+        this.currentUser?.data?.id;
+
+    if (!sellerId) return;
+
+    try {
+      const result =
+          await DueTrackerAPI.getCustomers(
+              sellerId
+          );
+
+      const customers =
+          result.data ||
+          result.customers ||
+          result ||
+          [];
+
+      customers.forEach(customer => {
+        const option =
+            document.createElement('option');
+
+        option.value =
+            customer.id;
+
+        option.textContent =
+            `${customer.name} - ${customer.phone}`;
+
+        select.appendChild(option);
+      });
+
+    } catch (error) {
+      console.error(
+          'Customer select error:',
+          error
+      );
+    }
+  },
+
+  async openReminderModal(customerId) {
+    try {
+      const sellerId =
+          this.currentUser?.data?.id;
+
+      const result =
+          await DueTrackerAPI.getCustomers(
+              sellerId
+          );
+
+      const customers =
+          result.data ||
+          result.customers ||
+          result ||
+          [];
+
+      const customer =
+          customers.find(
+              c => Number(c.id) === Number(customerId)
+          );
+
+      if (!customer) {
+        alert('Customer not found.');
+        return;
+      }
+
+      const due =
+          Number(
+              customer.dueAmount ??
+              customer.due ??
+              0
+          );
+
+      const seller =
+          this.currentUser?.data || {};
+
+      const message =
+          `Hello ${customer.name},
+
+This is a reminder from ${seller.storeName || seller.store || 'our store'}.
+
+Your current outstanding due is ${this.formatCurrency(due)}.
+
+Please clear the pending amount at your earliest convenience.
+
+Thank you.`;
+
+      const preview =
+          document.getElementById(
+              'remind-preview'
+          );
+
+      if (preview) {
+        preview.value = message;
+      }
+
+      const waBtn =
+          document.getElementById(
+              'remind-wa-btn'
+          );
+
+      if (waBtn) {
+        waBtn.onclick = () => {
+          const phone =
+              String(
+                  customer.phone || ''
+              ).replace(/\D/g, '');
+
+          const url =
+              `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+          window.open(
+              url,
+              '_blank'
+          );
+        };
+      }
+
+      const copyBtn =
+          document.getElementById(
+              'remind-copy-btn'
+          );
+
+      if (copyBtn) {
+        copyBtn.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(
+                message
+            );
+
+            alert(
+                'Reminder copied.'
+            );
+
+          } catch (error) {
+            console.error(
+                error
+            );
+          }
+        };
+      }
+
+      this.openModal(
+          'modal-remind'
+      );
+
+    } catch (error) {
+      console.error(
+          'Reminder modal error:',
+          error
+      );
+    }
+  },
+
+  showAlert(element, message, type = 'error') {
+    if (!element) return;
+
+    element.textContent = message;
+
+    element.className =
+        `alert ${type}`;
+
+    element.style.display =
+        'block';
+  },
+
+  setText(id, value) {
+    const element =
+        document.getElementById(id);
+
+    if (element) {
+      element.textContent =
+          value ?? '';
+    }
+  },
+
+  setValue(id, value) {
+    const element =
+        document.getElementById(id);
+
+    if (element) {
+      element.value =
+          value ?? '';
+    }
+  },
+
+  formatCurrency(value) {
+    const number =
+        Number(value || 0);
+
+    return new Intl.NumberFormat(
         'en-IN',
         {
-          minimumFractionDigits: 2,
+          style: 'currency',
+          currency: 'INR',
           maximumFractionDigits: 2
         }
-    );
+    ).format(number);
   },
 
-  // =============================================================
-  // HTML ESCAPING
-  // =============================================================
-
-  escapeHtml(str) {
-
-    if (!str) {
-      return '';
-    }
-
-    return String(str).replace(
-        /[&<>"']/g,
-        function(m) {
-
-          return {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-          }[m];
-
-        }
-    );
+  escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
   },
 
-  // =============================================================
-  // FIX FOR:
-  // Uncaught TypeError: this.escape is not a function
-  // =============================================================
-
-  escape(str) {
-
-    return this.escapeHtml(str);
+  escape(value) {
+    return this.escapeHtml(value);
   }
+
 };
+
+
+// Compatibility aliases for the existing HTML
 window.App = window.DueTrackerApp;
 
 
+// Existing HTML uses these names
+window.DueTrackerApp.togglePw =
+    function(inputId, btnEl) {
+      return this.togglePassword(
+          inputId,
+          btnEl
+      );
+    };
 
+window.DueTrackerApp.sellerMode =
+    function(mode) {
+      return this.toggleSellerAuthMode(
+          mode
+      );
+    };
+
+
+// Support DOMContentLoaded
 document.addEventListener(
     'DOMContentLoaded',
-    () => {
-      DueTrackerApp.init();
+    function() {
+      if (
+          window.DueTrackerApp &&
+          typeof window.DueTrackerApp.init ===
+          'function'
+      ) {
+        window.DueTrackerApp.init();
+      }
     }
 );
